@@ -129,7 +129,7 @@ def main():
 
         movementInfo = showWelcomeAnimation()
         
-        return movementInfo
+        return SCREEN, movementInfo
         #crashInfo = mainGame(movementInfo)
         #showGameOverScreen(crashInfo)
 
@@ -231,12 +231,12 @@ class FlappyEnv:
         self.playerFlapAcc =  -9   # players speed on flapping
         self.playerFlapped = False # True when player flaps
 
-    def step(self):
-            for event in pygame.event.get():
-                if event.type == QUIT or (event.type == KEYDOWN and event.key == K_ESCAPE):
-                    pygame.quit()
-                    sys.exit()
-                if event.type == KEYDOWN and (event.key == K_SPACE or event.key == K_UP):
+    def step(self, action: bool) -> None:
+            #for event in pygame.event.get():
+                #if event.type == QUIT or (event.type == KEYDOWN and event.key == K_ESCAPE):
+                    #pygame.quit()
+                    #sys.exit()
+            if action:
                     if self.playery > -2 * IMAGES['player'][0].get_height():
                         self.playerVelY = self.playerFlapAcc
                         self.playerFlapped = True
@@ -246,7 +246,7 @@ class FlappyEnv:
             crashTest = checkCrash({'x': self.playerx, 'y': self.playery, 'index': self.playerIndex},
                                 self.upperPipes, self.lowerPipes)
             if crashTest[0]:
-                return {
+                return None, True, {
                     'y': self.playery,
                     'groundCrash': crashTest[1],
                     'basex': self.basex,
@@ -315,15 +315,19 @@ class FlappyEnv:
             showScore(self.score)
 
             # Player rotation has a threshold
-            self.visibleRot = self.playerRotThr
+            visibleRot = self.playerRotThr
             if self.playerRot <= self.playerRotThr:
-                self.visibleRot = self.playerRot
+                visibleRot = self.playerRot
             
-            playerSurface = pygame.transform.rotate(IMAGES['player'][self.playerIndex], self.visibleRot)
+            playerSurface = pygame.transform.rotate(IMAGES['player'][self.playerIndex], visibleRot)
             SCREEN.blit(playerSurface, (self.playerx, self.playery))
 
             pygame.display.update()
             FPSCLOCK.tick(FPS)
+            image_state = pygame.surfarray.pixels3d(SCREEN)
+            image_state_copy = image_state.copy()
+            del image_state
+            return image_state_copy, False, None
 
 
 def showGameOverScreen(crashInfo):
@@ -377,9 +381,6 @@ def showGameOverScreen(crashInfo):
 
         SCREEN.blit(IMAGES['base'], (basex, BASEY))
         showScore(score)
-
-        
-
 
         playerSurface = pygame.transform.rotate(IMAGES['player'][1], playerRot)
         SCREEN.blit(playerSurface, (playerx,playery))

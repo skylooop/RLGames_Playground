@@ -1,22 +1,31 @@
-import flappy as flp
+import flappy as flappypack
 from absl import app, flags
 
+import numpy as np
+import torch
 
 FLAGS = flags.FLAGS
 
 def main(_):
-    movementInfo = flp.main()
+    screen, movementInfo = flappypack.main()
     
     for episode in range(10):
-        flappy = flp.FlappyEnv(movementInfo)
-        print(f"Episode: {episode}")
+        flappy = flappypack.FlappyEnv(movementInfo)
         done = None
-        for t in range(1000):
-            #while not done:
-            done = flappy.step() is not None
+        reward = 0
+        image_state, done, info = flappy.step(False) # like reset
+        image_state = torch.from_numpy(image_state)
+        for t in range(100):
+            #action = np.random.choice(2, size=1,p=np.array([0.7, 0.3]))
+            action = np.random.random() > 0.8
+            image_state, done, info = flappy.step(action)
             if done:
-                print(done)
+                reward = info['score']
                 break
+            
+            image_state = torch.from_numpy(image_state)
+            print(image_state)
+        print(f"Episode: {episode}, Reward: {reward}")
             
 if __name__ == "__main__":
     app.run(main) 
